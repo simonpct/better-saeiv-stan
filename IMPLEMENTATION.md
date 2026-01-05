@@ -1,0 +1,1101 @@
+# 🚀 IMPLEMENTATION ROADMAP - SAEIV Next-Gen
+
+**Dernière mise à jour** : 2026-01-05
+**Phase actuelle** : Phase 0 - Initialisation
+**Progression globale** : 0%
+
+---
+
+## 📋 TABLE DES MATIÈRES
+
+1. [État Global](#état-global)
+2. [Phase 1 : Foundation Setup](#phase-1--foundation-setup)
+3. [Phase 2 : Vertical Slice MVP](#phase-2--vertical-slice-mvp)
+4. [Phases 3-N : Features Atomiques](#phases-3-n--features-atomiques)
+5. [Décisions Techniques](#décisions-techniques)
+6. [Notes d'Implémentation](#notes-dimplémentation)
+7. [Bugs & Issues](#bugs--issues)
+
+---
+
+## 🎯 ÉTAT GLOBAL
+
+### Stack Confirmée
+- ✅ **Framework** : Next.js 16 (App Router)
+- ✅ **State** : Zustand (Slices pattern)
+- ✅ **Map** : MapLibre GL JS
+- ✅ **Geo** : Turf.js
+- ✅ **UI** : Tailwind CSS
+- ✅ **Deploy** : Vercel
+
+### Architecture
+- **Type** : Hybrid Client-Server
+- **Backend** : API Routes Next.js (cache uniquement)
+- **Données** : GTFS Stan Nancy + OSM via Overpass
+- **LOD** : Obligatoire (3 niveaux)
+- **Scope MVP** : 1 ligne, 3-5 bus standards, desktop only
+
+### Conventions de Code
+```typescript
+// Ordre des imports
+1. React/Next
+2. Libraries externes (zustand, maplibre, turf)
+3. Types locaux
+4. Stores
+5. Components
+6. Utils
+
+// Nommage
+- Types/Interfaces : PascalCase (Bus, GeoPoint)
+- Composants : PascalCase (MapCanvas.tsx)
+- Fichiers utils : camelCase (formatTime.ts)
+- Stores : camelCase avec Slice suffix (fleetSlice.ts)
+- Constantes : UPPER_SNAKE_CASE
+```
+
+---
+
+## 📦 PHASE 1 : FOUNDATION SETUP
+
+**Objectif** : Créer toute la structure du projet avec types complets et squelettes.
+**État** : ⏸️ Pas démarré
+**Estimation tokens** : ~15k
+
+### 1.1 Initialisation Next.js ⏸️
+
+**Commandes** :
+```bash
+cd /Users/simon/DEV/better-saeiv-stan
+npx create-next-app@latest . --typescript --app --tailwind --no-src
+```
+
+**Config** :
+- ✅ TypeScript strict mode
+- ✅ App Router
+- ✅ Tailwind CSS
+- ❌ ESLint (désactivé pour perf)
+- ❌ Turbopack (pas stable Next.js 16)
+
+**Fichiers à vérifier** :
+- [ ] `package.json` existe
+- [ ] `tsconfig.json` avec strict: true
+- [ ] `tailwind.config.ts` existe
+- [ ] `next.config.ts` créé
+
+---
+
+### 1.2 Installation des Dépendances ⏸️
+
+**Package.json additions** :
+```json
+{
+  "dependencies": {
+    "zustand": "^5.0.2",
+    "maplibre-gl": "^4.7.1",
+    "@turf/turf": "^7.1.0",
+    "date-fns": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/maplibre-gl": "^3.1.0"
+  }
+}
+```
+
+**Commande** :
+```bash
+npm install zustand maplibre-gl @turf/turf date-fns
+npm install -D @types/maplibre-gl
+```
+
+**Vérification** :
+- [ ] `npm run dev` démarre sans erreur
+- [ ] Aucune erreur TypeScript
+
+---
+
+### 1.3 Structure de Dossiers ⏸️
+
+**À créer** :
+```
+src/
+├── app/
+│   ├── api/
+│   │   ├── gtfs/
+│   │   │   └── nancy/
+│   │   │       └── route.ts           [⏸️ À créer]
+│   │   ├── osm/
+│   │   │   └── overpass/
+│   │   │       └── route.ts           [⏸️ À créer]
+│   │   └── routing/
+│   │       └── dijkstra/
+│   │           └── route.ts           [⏸️ À créer]
+│   └── pcc/
+│       ├── page.tsx                   [⏸️ À créer]
+│       └── layout.tsx                 [⏸️ À créer]
+├── components/
+│   ├── ui/
+│   │   ├── Button.tsx                 [⏸️ À créer]
+│   │   └── Card.tsx                   [⏸️ À créer]
+│   ├── map/
+│   │   ├── MapCanvas.tsx              [⏸️ À créer]
+│   │   └── BusMarker.tsx              [⏸️ À créer]
+│   ├── panels/
+│   │   ├── Inspector.tsx              [⏸️ À créer]
+│   │   ├── MainCourante.tsx           [⏸️ À créer]
+│   │   └── Synoptic.tsx               [⏸️ À créer - Phase 2]
+│   └── controls/
+│       └── TimeControls.tsx           [⏸️ À créer]
+├── hooks/
+│   └── useSimulation.ts               [⏸️ À créer]
+├── lib/
+│   ├── engine/
+│   │   ├── movement.ts                [⏸️ À créer]
+│   │   └── telemetry.ts               [⏸️ À créer]
+│   └── utils/
+│       ├── geo.ts                     [⏸️ À créer]
+│       └── time.ts                    [⏸️ À créer]
+├── store/
+│   ├── index.ts                       [⏸️ À créer - Store racine]
+│   └── slices/
+│       ├── temporalSlice.ts           [⏸️ À créer]
+│       ├── fleetSlice.ts              [⏸️ À créer]
+│       ├── networkSlice.ts            [⏸️ À créer]
+│       └── logSlice.ts                [⏸️ À créer]
+└── types/
+    └── index.ts                       [⏸️ À créer - PRIORITÉ MAX]
+```
+
+**Commande de création** :
+```bash
+mkdir -p src/{app/api/{gtfs/nancy,osm/overpass,routing/dijkstra},app/pcc,components/{ui,map,panels,controls},hooks,lib/{engine,utils},store/slices,types}
+```
+
+---
+
+### 1.4 Types TypeScript Complets ⏸️
+
+**Fichier** : `src/types/index.ts`
+**État** : ⏸️ Pas créé
+**Importance** : 🔴 **CRITIQUE** - Référence pour tout le reste
+
+**Contenu à créer** :
+```typescript
+/**
+ * TYPES CENTRAUX DU SAEIV
+ *
+ * Ce fichier définit TOUS les types utilisés dans l'application.
+ * Il sert de référence unique et doit être lu au début de chaque
+ * implémentation de feature.
+ *
+ * Voir specs.md section 2 pour détails complets.
+ */
+
+// ============================================================================
+// GEO & SPATIAL
+// ============================================================================
+
+/**
+ * Coordonnées géographiques [longitude, latitude]
+ * ATTENTION : GeoJSON utilise [lon, lat], pas [lat, lon]
+ */
+export type GeoPoint = [number, number];
+
+export interface BoundingBox {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}
+
+// Nancy bbox - À utiliser partout
+export const NANCY_BBOX: BoundingBox = {
+  north: 48.72,
+  south: 48.65,
+  east: 6.25,
+  west: 6.1,
+};
+
+// ============================================================================
+// VÉHICULES
+// ============================================================================
+
+export type BusType = 'STANDARD' | 'ARTICULATED' | 'BI_ARTICULATED';
+export type VehicleStatus = 'IDLE' | 'IN_SERVICE' | 'HLP' | 'EMERGENCY' | 'OFF_LINE';
+export type EnergyType = 'ELECTRIC' | 'CNG';
+
+/**
+ * Segment d'un bus (tracteur ou remorque)
+ * Un bus STANDARD a 1 segment, ARTICULATED 2, BI_ARTICULATED 3
+ */
+export interface BusSegment {
+  id: string; // 'tracteur' | 'remorque_1' | 'remorque_2'
+  length: number; // mètres
+  width: number; // mètres
+  currentHeading: number; // degrés (0 = Nord)
+  currentPosition: GeoPoint; // [lon, lat]
+}
+
+/**
+ * Télémétrie en temps réel d'un bus
+ */
+export interface BusTelemetry {
+  energyLevel: number; // 0-100%
+  energyType: EnergyType;
+  doors: boolean[]; // [porte1, porte2, porte3, porte4]
+  engineTemp: number; // Celsius
+  alerts: {
+    abs: boolean;
+    overheat: boolean;
+  };
+  odometer: number; // km total parcouru
+}
+
+/**
+ * Bus complet (peut être standard, articulé ou bi-articulé)
+ */
+export interface Bus {
+  id: string;
+  type: BusType;
+  status: VehicleStatus;
+  segments: BusSegment[]; // 1 pour STANDARD, 2 pour ARTICULATED, 3 pour BI_ARTICULATED
+  telemetry: BusTelemetry;
+  assignedRouteId?: string; // ID de la ligne GTFS
+  assignedTripId?: string; // ID du trip GTFS en cours
+  currentStopIndex?: number; // Index dans le trip
+  parkingSpaceId?: string; // ID OSM de la place de parking (si IDLE)
+  speed: number; // km/h
+}
+
+// ============================================================================
+// GTFS & RÉSEAU
+// ============================================================================
+
+/**
+ * Arrêt de bus (depuis GTFS stops.txt)
+ */
+export interface Stop {
+  id: string; // stop_id du GTFS
+  name: string;
+  position: GeoPoint;
+  code?: string; // Code physique affiché à l'arrêt
+}
+
+/**
+ * Horaire à un arrêt (depuis GTFS stop_times.txt)
+ */
+export interface StopTime {
+  stopId: string;
+  arrivalTime: string; // "HH:MM:SS" (peut dépasser 24h!)
+  departureTime: string;
+  stopSequence: number;
+}
+
+/**
+ * Trip GTFS (un service/départ)
+ */
+export interface Trip {
+  id: string; // trip_id du GTFS
+  routeId: string; // Lien vers la ligne
+  serviceId: string; // Calendrier (weekday, weekend, etc.)
+  stopTimes: StopTime[];
+  shapeId?: string;
+}
+
+/**
+ * Route/Ligne GTFS
+ */
+export interface Route {
+  id: string; // route_id
+  shortName: string; // "T1", "T2", etc.
+  longName: string; // "Tram Ligne 1 : ..."
+  type: number; // 0=tram, 3=bus, etc.
+  color: string; // Hex color "#FF6600"
+  textColor: string; // "#FFFFFF"
+}
+
+/**
+ * Géométrie d'une route (tracé sur la carte)
+ */
+export interface RouteGeometry {
+  routeId: string;
+  path: GeoPoint[]; // LineString coordinates
+  stops: string[]; // IDs des stops dans l'ordre
+}
+
+/**
+ * Déviation de tracé (modification temporaire)
+ */
+export interface Deviation {
+  id: string;
+  routeId: string;
+  startStopId: string;
+  endStopId: string;
+  alternativePath: GeoPoint[];
+  active: boolean;
+  createdAt: Date;
+}
+
+// ============================================================================
+// TEMPORAL / TEMPS
+// ============================================================================
+
+export type TimeScale = 1 | 10 | 30 | 60; // Multiplicateur de vitesse
+
+export interface VirtualTime {
+  current: Date; // Heure virtuelle actuelle
+  scale: TimeScale; // Vitesse de simulation
+  isPaused: boolean;
+}
+
+// ============================================================================
+// LOGS / MAIN COURANTE
+// ============================================================================
+
+export type LogSeverity = 'INFO' | 'WARNING' | 'CRITICAL';
+export type LogSource = 'VEHICLE' | 'SYSTEM' | 'REGULATION';
+
+export interface LogEntry {
+  id: string;
+  virtualTimestamp: Date; // Heure virtuelle de l'event
+  severity: LogSeverity;
+  source: LogSource;
+  message: string;
+  entityId?: string; // ID du bus/arrêt concerné
+}
+
+// ============================================================================
+// PERFORMANCE & LOD
+// ============================================================================
+
+export type LODLevel = 'full' | 'simplified' | 'minimal';
+
+export interface PerformanceMetrics {
+  fps: number;
+  tickDuration: number; // ms par tick
+  activeVehicles: number;
+  lodLevel: LODLevel;
+}
+
+// ============================================================================
+// API RESPONSES
+// ============================================================================
+
+/**
+ * Réponse de l'API /api/gtfs/nancy/routes
+ */
+export interface GTFSRoutesResponse {
+  routes: Route[];
+  totalCount: number;
+}
+
+/**
+ * Réponse de l'API /api/gtfs/nancy/route/[id]
+ */
+export interface GTFSRouteDetailResponse {
+  route: Route;
+  geometry: RouteGeometry;
+  stops: Stop[];
+  trips: Trip[];
+}
+
+/**
+ * Réponse de l'API /api/routing/dijkstra
+ */
+export interface RoutingResponse {
+  path: GeoPoint[];
+  distance: number; // mètres
+  duration: number; // secondes
+  warnings: string[];
+}
+
+// ============================================================================
+// UI STATES
+// ============================================================================
+
+export interface MapViewState {
+  center: GeoPoint;
+  zoom: number;
+  bearing: number;
+  pitch: number;
+}
+
+export type PanelView = 'bus' | 'stop' | 'depot' | null;
+
+// ============================================================================
+// CONSTANTES
+// ============================================================================
+
+export const DEFAULT_BUS_SPEED = 30; // km/h
+export const TICK_RATE = 30; // Hz (30 FPS pour la physique)
+export const TARGET_FPS = 60;
+export const MAX_VEHICLES = 20;
+export const MAX_BI_ARTICULATED = 5;
+
+export const LOD_ZOOM_THRESHOLDS = {
+  FULL: 16,
+  SIMPLIFIED: 14,
+  MINIMAL: 10,
+} as const;
+```
+
+**Vérifications après création** :
+- [ ] Aucune erreur TypeScript dans le fichier
+- [ ] Tous les types du spec sont présents
+- [ ] Commentaires JSDoc présents
+- [ ] Constantes NANCY_BBOX et seuils LOD définis
+
+---
+
+### 1.5 Stores Zustand (Squelettes) ⏸️
+
+**Approche** : Créer les interfaces complètes, implémentations minimales.
+
+#### 1.5.1 Store Racine (`src/store/index.ts`) ⏸️
+
+```typescript
+/**
+ * STORE RACINE ZUSTAND
+ *
+ * Combine tous les slices dans un seul store global.
+ * Pattern: https://docs.pmnd.rs/zustand/guides/typescript#slices-pattern
+ */
+
+import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
+import { createTemporalSlice, TemporalSlice } from './slices/temporalSlice';
+import { createFleetSlice, FleetSlice } from './slices/fleetSlice';
+import { createNetworkSlice, NetworkSlice } from './slices/networkSlice';
+import { createLogSlice, LogSlice } from './slices/logSlice';
+
+export type PCCStore = TemporalSlice & FleetSlice & NetworkSlice & LogSlice;
+
+export const usePCCStore = create<PCCStore>()(
+  devtools(
+    (...a) => ({
+      ...createTemporalSlice(...a),
+      ...createFleetSlice(...a),
+      ...createNetworkSlice(...a),
+      ...createLogSlice(...a),
+    }),
+    { name: 'PCC Store' }
+  )
+);
+```
+
+**État** : ⏸️ À créer
+
+---
+
+#### 1.5.2 TemporalSlice ⏸️
+
+**Fichier** : `src/store/slices/temporalSlice.ts`
+
+```typescript
+import { StateCreator } from 'zustand';
+import { PCCStore } from '../index';
+import { VirtualTime, TimeScale } from '@/types';
+
+export interface TemporalSlice {
+  // State
+  virtualTime: Date;
+  timeScale: TimeScale;
+  isPaused: boolean;
+
+  // Actions
+  tick: (deltaTime: number) => void;
+  setSpeed: (speed: TimeScale) => void;
+  togglePause: () => void;
+  seekTime: (target: Date) => void;
+}
+
+export const createTemporalSlice: StateCreator<
+  PCCStore,
+  [],
+  [],
+  TemporalSlice
+> = (set, get) => ({
+  // État initial
+  virtualTime: new Date('2026-01-05T08:00:00'), // Lundi 8h
+  timeScale: 1,
+  isPaused: true,
+
+  // TODO Phase 2: Implémenter la logique temporelle
+  // Voir specs.md section "TemporalStore"
+  tick: (deltaTime: number) => {
+    // À implémenter
+  },
+
+  setSpeed: (speed: TimeScale) => {
+    set({ timeScale: speed });
+  },
+
+  togglePause: () => {
+    set((state) => ({ isPaused: !state.isPaused }));
+  },
+
+  seekTime: (target: Date) => {
+    set({ virtualTime: target });
+  },
+});
+```
+
+**État** : ⏸️ À créer
+**Dépendances** : types/index.ts
+
+---
+
+#### 1.5.3 FleetSlice ⏸️
+
+**Fichier** : `src/store/slices/fleetSlice.ts`
+
+```typescript
+import { StateCreator } from 'zustand';
+import { PCCStore } from '../index';
+import { Bus, VehicleStatus, LODLevel } from '@/types';
+
+export interface FleetSlice {
+  // State
+  vehicles: Record<string, Bus>;
+  selectedEntityId: string | null;
+  lodLevel: LODLevel;
+
+  // Actions
+  updateVehiclesLogic: () => void;
+  setVehicleStatus: (id: string, status: VehicleStatus) => void;
+  toggleDoors: (id: string, doorIndex: number) => void;
+  selectEntity: (id: string | null) => void;
+  updateLOD: (zoom: number) => void;
+}
+
+export const createFleetSlice: StateCreator<
+  PCCStore,
+  [],
+  [],
+  FleetSlice
+> = (set, get) => ({
+  vehicles: {},
+  selectedEntityId: null,
+  lodLevel: 'full',
+
+  // TODO Phase 2: Implémenter mouvement des bus
+  // Algo: Utiliser turf.along() pour suivre le tracé GTFS
+  // Vitesse: DEFAULT_BUS_SPEED modulée par trafic
+  updateVehiclesLogic: () => {
+    // À implémenter
+  },
+
+  setVehicleStatus: (id, status) => {
+    set((state) => ({
+      vehicles: {
+        ...state.vehicles,
+        [id]: { ...state.vehicles[id], status },
+      },
+    }));
+  },
+
+  toggleDoors: (id, doorIndex) => {
+    // À implémenter
+  },
+
+  selectEntity: (id) => {
+    set({ selectedEntityId: id });
+  },
+
+  updateLOD: (zoom) => {
+    const level: LODLevel =
+      zoom >= 16 ? 'full' : zoom >= 14 ? 'simplified' : 'minimal';
+    set({ lodLevel: level });
+  },
+});
+```
+
+**État** : ⏸️ À créer
+
+---
+
+#### 1.5.4 NetworkSlice ⏸️
+
+**Fichier** : `src/store/slices/networkSlice.ts`
+
+```typescript
+import { StateCreator } from 'zustand';
+import { PCCStore } from '../index';
+import { Route, RouteGeometry, Stop, Deviation } from '@/types';
+
+export interface NetworkSlice {
+  // State
+  routes: Record<string, RouteGeometry>;
+  stops: Record<string, Stop>;
+  activeDeviations: Deviation[];
+  selectedRouteId: string | null;
+
+  // Actions
+  loadRoute: (routeId: string) => Promise<void>;
+  addDeviation: (routeId: string, deviation: Deviation) => void;
+  selectRoute: (routeId: string | null) => void;
+}
+
+export const createNetworkSlice: StateCreator<
+  PCCStore,
+  [],
+  [],
+  NetworkSlice
+> = (set, get) => ({
+  routes: {},
+  stops: {},
+  activeDeviations: [],
+  selectedRouteId: null,
+
+  // TODO Phase 3: Implémenter chargement depuis API
+  loadRoute: async (routeId) => {
+    // Fetch depuis /api/gtfs/nancy/route/[id]
+  },
+
+  addDeviation: (routeId, deviation) => {
+    set((state) => ({
+      activeDeviations: [...state.activeDeviations, deviation],
+    }));
+  },
+
+  selectRoute: (routeId) => {
+    set({ selectedRouteId: routeId });
+  },
+});
+```
+
+**État** : ⏸️ À créer
+
+---
+
+#### 1.5.5 LogSlice ⏸️
+
+**Fichier** : `src/store/slices/logSlice.ts`
+
+```typescript
+import { StateCreator } from 'zustand';
+import { PCCStore } from '../index';
+import { LogEntry, LogSeverity, LogSource } from '@/types';
+
+export interface LogSlice {
+  // State
+  logs: LogEntry[];
+
+  // Actions
+  addLog: (entry: Omit<LogEntry, 'id' | 'virtualTimestamp'>) => void;
+  clearLogs: () => void;
+}
+
+export const createLogSlice: StateCreator<
+  PCCStore,
+  [],
+  [],
+  LogSlice
+> = (set, get) => ({
+  logs: [],
+
+  addLog: (entry) => {
+    const virtualTime = get().virtualTime;
+    const newLog: LogEntry = {
+      ...entry,
+      id: `log-${Date.now()}-${Math.random()}`,
+      virtualTimestamp: virtualTime,
+    };
+
+    set((state) => ({
+      logs: [...state.logs, newLog],
+    }));
+  },
+
+  clearLogs: () => {
+    set({ logs: [] });
+  },
+});
+```
+
+**État** : ⏸️ À créer
+
+---
+
+### 1.6 Composants React (Squelettes) ⏸️
+
+Tous les composants sont créés avec structure minimale + TODOs.
+
+#### MapCanvas.tsx ⏸️
+```typescript
+'use client';
+
+/**
+ * COMPOSANT MAPLIBRE PRINCIPAL
+ *
+ * Responsabilités:
+ * - Init MapLibre avec style
+ * - Afficher les bus (layers)
+ * - Gérer le LOD selon zoom
+ * - Interactions (clic, drag)
+ *
+ * TODO Phase 2: Implémenter MapLibre init
+ * TODO Phase 3: Ajouter layers bus (LOD)
+ */
+
+export default function MapCanvas() {
+  return (
+    <div className="w-full h-full bg-slate-900">
+      {/* TODO: MapLibre container */}
+      <div id="map" className="w-full h-full"></div>
+    </div>
+  );
+}
+```
+
+**État** : ⏸️ À créer
+**Fichier** : `src/components/map/MapCanvas.tsx`
+
+---
+
+### 1.7 Tailwind Config ⏸️
+
+Ajouter thème "Dark Ops" dans `tailwind.config.ts` :
+
+```typescript
+export default {
+  theme: {
+    extend: {
+      colors: {
+        // Dark Ops palette
+        ops: {
+          bg: '#0a0e1a',
+          panel: '#12172a',
+          border: '#1e2742',
+          text: '#e2e8f0',
+          accent: '#3b82f6',
+          warning: '#f59e0b',
+          critical: '#ef4444',
+          success: '#10b981',
+        },
+      },
+    },
+  },
+};
+```
+
+---
+
+## ✅ CHECKLIST PHASE 1
+
+Avant de passer à Phase 2, vérifier :
+
+- [ ] `npm run dev` démarre sans erreur
+- [ ] Aucune erreur TypeScript dans tout le projet
+- [ ] Fichier `types/index.ts` complet et documenté
+- [ ] Les 4 slices Zustand compilent
+- [ ] Store racine créé et exporté
+- [ ] Structure de dossiers complète
+- [ ] Tailwind config avec thème Dark Ops
+- [ ] Tous les fichiers ont des TODOs pour Phase 2
+
+**Commande de validation** :
+```bash
+npm run build
+```
+
+Si le build passe → Phase 1 terminée ✅
+
+---
+
+## 🎨 PHASE 2 : VERTICAL SLICE MVP
+
+**État** : ⏸️ Pas démarré
+**Prérequis** : Phase 1 complète
+**Estimation tokens** : ~20k
+
+### Objectif
+Avoir une démo fonctionnelle end-to-end :
+- ✅ Carte MapLibre affichée
+- ✅ 1 bus statique positionné sur Nancy
+- ✅ Horloge virtuelle qui tourne
+- ✅ Inspector affiche le bus sélectionné
+- ✅ TimeControls (pause/play/speed)
+
+### 2.1 MapLibre Init ⏸️
+
+**Fichier** : `src/components/map/MapCanvas.tsx`
+
+**À implémenter** :
+```typescript
+useEffect(() => {
+  const map = new maplibregl.Map({
+    container: 'map',
+    style: 'https://demotiles.maplibre.org/style.json', // Temp
+    center: [6.18, 48.68], // Nancy
+    zoom: 13,
+  });
+
+  // Cleanup
+  return () => map.remove();
+}, []);
+```
+
+**TODOs** :
+- [ ] Installer maplibre-gl CSS
+- [ ] Créer le map instance
+- [ ] Centrer sur Nancy
+- [ ] Ajouter controls (zoom, etc.)
+
+---
+
+### 2.2 Bus Statique ⏸️
+
+**Fichier** : `src/store/slices/fleetSlice.ts`
+
+Ajouter un bus de test dans l'état initial :
+
+```typescript
+vehicles: {
+  'bus-001': {
+    id: 'bus-001',
+    type: 'STANDARD',
+    status: 'IN_SERVICE',
+    segments: [
+      {
+        id: 'tracteur',
+        length: 12,
+        width: 2.5,
+        currentHeading: 45,
+        currentPosition: [6.18, 48.68], // Place Stanislas
+      },
+    ],
+    telemetry: {
+      energyLevel: 85,
+      energyType: 'ELECTRIC',
+      doors: [false, false, false, false],
+      engineTemp: 75,
+      alerts: { abs: false, overheat: false },
+      odometer: 12450,
+    },
+    speed: 0,
+  },
+},
+```
+
+**Affichage sur la carte** :
+```typescript
+// Dans MapCanvas.tsx
+map.addSource('fleet', {
+  type: 'geojson',
+  data: {
+    type: 'FeatureCollection',
+    features: Object.values(vehicles).map(bus => ({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: bus.segments[0].currentPosition,
+      },
+      properties: { id: bus.id },
+    })),
+  },
+});
+
+map.addLayer({
+  id: 'buses',
+  type: 'circle',
+  source: 'fleet',
+  paint: {
+    'circle-radius': 8,
+    'circle-color': '#3b82f6',
+  },
+});
+```
+
+---
+
+### 2.3 Horloge Temps Réel ⏸️
+
+**Fichier** : `src/hooks/useSimulation.ts`
+
+```typescript
+export function useSimulation() {
+  const { virtualTime, timeScale, isPaused, tick } = usePCCStore();
+
+  useEffect(() => {
+    if (isPaused) return;
+
+    let lastTime = performance.now();
+    let animationId: number;
+
+    const loop = (currentTime: number) => {
+      const deltaTime = (currentTime - lastTime) / 1000; // secondes
+      lastTime = currentTime;
+
+      tick(deltaTime * timeScale);
+
+      animationId = requestAnimationFrame(loop);
+    };
+
+    animationId = requestAnimationFrame(loop);
+
+    return () => cancelAnimationFrame(animationId);
+  }, [isPaused, timeScale]);
+}
+```
+
+Implémenter `tick()` dans temporalSlice :
+```typescript
+tick: (deltaTime) => {
+  set((state) => ({
+    virtualTime: new Date(state.virtualTime.getTime() + deltaTime * 1000),
+  }));
+},
+```
+
+---
+
+### 2.4 UI Layout PCC ⏸️
+
+**Fichier** : `src/app/pcc/page.tsx`
+
+Layout 4 zones :
+```tsx
+export default function PCCPage() {
+  return (
+    <div className="h-screen flex flex-col bg-ops-bg text-ops-text">
+      {/* Header */}
+      <header className="h-16 bg-ops-panel border-b border-ops-border px-4 flex items-center justify-between">
+        <h1 className="text-xl font-bold">SAEIV - Supervision Transport</h1>
+        <TimeControls />
+      </header>
+
+      {/* Main content */}
+      <div className="flex-1 flex">
+        {/* Inspector (gauche) */}
+        <aside className="w-80 bg-ops-panel border-r border-ops-border">
+          <Inspector />
+        </aside>
+
+        {/* Map (centre) */}
+        <main className="flex-1">
+          <MapCanvas />
+        </main>
+
+        {/* Main Courante (droite) */}
+        <aside className="w-96 bg-ops-panel border-l border-ops-border">
+          <MainCourante />
+        </aside>
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## ✅ CHECKLIST PHASE 2
+
+- [ ] Carte MapLibre visible et centrée sur Nancy
+- [ ] 1 bus visible sur la carte (cercle bleu)
+- [ ] Horloge virtuelle affichée et qui tourne
+- [ ] Boutons pause/play fonctionnels
+- [ ] Sélection du bus change l'Inspector
+- [ ] Layout 4 zones responsive
+- [ ] 60 FPS constant (vérifier devtools)
+
+**Si OK → Phase 2 terminée ✅**
+
+---
+
+## 🚧 PHASES 3-N : FEATURES ATOMIQUES
+
+Chaque feature = 1 conversation courte (~5-10k tokens).
+
+### Phase 3.1 : Mouvement des Bus ⏸️
+**Fichiers** : `fleetSlice.ts`, `lib/engine/movement.ts`
+**Objectif** : Bus se déplacent le long du tracé GTFS
+
+### Phase 3.2 : API GTFS Nancy ⏸️
+**Fichiers** : `app/api/gtfs/nancy/route.ts`
+**Objectif** : Charger lignes Stan depuis JSON pré-traité
+
+### Phase 3.3 : LOD System ⏸️
+**Fichiers** : `MapCanvas.tsx`, `fleetSlice.ts`
+**Objectif** : 3 layers bus selon zoom
+
+### Phase 3.4 : Télémétrie Dynamique ⏸️
+**Fichiers** : `lib/engine/telemetry.ts`, `Inspector.tsx`
+**Objectif** : Simulation alertes, affichage jauges
+
+### Phase 3.5 : Main Courante ⏸️
+**Fichiers** : `MainCourante.tsx`, `logSlice.ts`
+**Objectif** : Liste scrollable des logs avec filtres
+
+*(Plus de phases détaillées au fur et à mesure)*
+
+---
+
+## 🔧 DÉCISIONS TECHNIQUES
+
+### DT-001 : Pas de sql.js pour GTFS
+**Date** : 2026-01-05
+**Décision** : Utiliser JSON pré-traité au lieu de SQLite
+**Raison** : sql.js = 2MB, pas de SpatiaLite en WASM, overkill pour 1 ligne
+**Alternative** : Parser GTFS CSV → JSON au build time
+
+### DT-002 : MapLibre style
+**Date** : 2026-01-05
+**Décision** : Utiliser un style OSM custom ou Maptiler free tier
+**Raison** : Meilleur contrôle du thème Dark Ops
+**TODO** : Choisir entre Maptiler ou self-hosted OSM tiles
+
+---
+
+## 📝 NOTES D'IMPLÉMENTATION
+
+### NI-001 : GeoJSON lon/lat
+**Rappel** : TOUJOURS utiliser [longitude, latitude] pour GeoJSON.
+MapLibre attend aussi [lon, lat]. Ne jamais inverser.
+
+### NI-002 : Zustand et React 19
+**Note** : Zustand 5+ compatible React 19. Pas de soucis de deps.
+
+### NI-003 : Performance MapLibre
+**Astuce** : Utiliser `map.setData()` sur la source, pas `removeLayer/addLayer`.
+Beaucoup plus performant pour animer les bus.
+
+---
+
+## 🐛 BUGS & ISSUES
+
+### BUG-001 : (Exemple)
+**Status** : 🔴 Ouvert
+**Description** : Aucun bug pour l'instant (projet pas démarré)
+**Fichiers** : N/A
+**Solution** : N/A
+
+---
+
+## 📊 MÉTRIQUES DE PROGRESSION
+
+| Phase | État | Fichiers | LOC | Tokens utilisés | Date fin |
+|-------|------|----------|-----|-----------------|----------|
+| Phase 1 | ⏸️ | 0/15 | 0 | 0 | - |
+| Phase 2 | ⏸️ | 0/8 | 0 | 0 | - |
+| Phase 3+ | ⏸️ | 0/X | 0 | 0 | - |
+
+**Total progression** : 0% ⏸️
+
+---
+
+## 🎯 PROCHAINE ACTION
+
+**À FAIRE MAINTENANT** :
+1. Lire ce fichier `IMPLEMENTATION.md` au début de chaque session
+2. Commencer Phase 1.1 : Init Next.js
+3. Mettre à jour ce fichier après chaque feature complétée
+
+**Commande de démarrage Phase 1** :
+```bash
+cd /Users/simon/DEV/better-saeiv-stan
+npx create-next-app@latest . --typescript --app --tailwind --no-src
+```
+
+---
+
+**FIN DU ROADMAP - Maintenu à jour en continu**
