@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+/* Dark Ops Theme */
+:root {
+  --ops-bg: #0a0e1a;
+  --ops-panel: #12172a;
+  --ops-border: #1e2742;
+  --ops-text: #e2e8f0;
+  --ops-accent: #3b82f6;
+  --ops-warning: #f59e0b;
+  --ops-critical: #ef4444;
+  --ops-success: #10b981;
+}
+
+@theme inline {
+  /* Dark Ops Color Palette */
+  --color-ops-bg: var(--ops-bg);
+  --color-ops-panel: var(--ops-panel);
+  --color-ops-border: var(--ops-border);
+  --color-ops-text: var(--ops-text);
+  --color-ops-accent: var(--ops-accent);
+  --color-ops-warning: var(--ops-warning);
+  --color-ops-critical: var(--ops-critical);
+  --color-ops-success: var(--ops-success);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--ops-bg);
+  color: var(--ops-text);
+  font-family: Arial, Helvetica, sans-serif;
+}

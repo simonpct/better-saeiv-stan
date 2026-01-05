@@ -1,8 +1,8 @@
 # 🚀 IMPLEMENTATION ROADMAP - SAEIV Next-Gen
 
 **Dernière mise à jour** : 2026-01-05
-**Phase actuelle** : Phase 0 - Initialisation
-**Progression globale** : 0%
+**Phase actuelle** : Phase 1 - Terminée ✅
+**Progression globale** : 20%
 
 ---
 
@@ -58,8 +58,9 @@
 ## 📦 PHASE 1 : FOUNDATION SETUP
 
 **Objectif** : Créer toute la structure du projet avec types complets et squelettes.
-**État** : ⏸️ Pas démarré
-**Estimation tokens** : ~15k
+**État** : ✅ TERMINÉE
+**Tokens utilisés** : ~18k
+**Date de completion** : 2026-01-05
 
 ### 1.1 Initialisation Next.js ⏸️
 
@@ -140,9 +141,9 @@ src/
 │   │   ├── MapCanvas.tsx              [⏸️ À créer]
 │   │   └── BusMarker.tsx              [⏸️ À créer]
 │   ├── panels/
-│   │   ├── Inspector.tsx              [⏸️ À créer]
-│   │   ├── MainCourante.tsx           [⏸️ À créer]
-│   │   └── Synoptic.tsx               [⏸️ À créer - Phase 2]
+│   │   ├── Inspector.tsx              [✅ Créé - Phase 1]
+│   │   ├── MainCourante.tsx           [✅ Créé - Phase 1]
+│   │   └── Synoptic.tsx               [✅ Créé - Phase 1 (squelette)]
 │   └── controls/
 │       └── TimeControls.tsx           [⏸️ À créer]
 ├── hooks/
@@ -784,21 +785,23 @@ export default {
 
 Avant de passer à Phase 2, vérifier :
 
-- [ ] `npm run dev` démarre sans erreur
-- [ ] Aucune erreur TypeScript dans tout le projet
-- [ ] Fichier `types/index.ts` complet et documenté
-- [ ] Les 4 slices Zustand compilent
-- [ ] Store racine créé et exporté
-- [ ] Structure de dossiers complète
-- [ ] Tailwind config avec thème Dark Ops
-- [ ] Tous les fichiers ont des TODOs pour Phase 2
+- [x] `npm run dev` démarre sans erreur
+- [x] Aucune erreur TypeScript dans tout le projet
+- [x] Fichier `types/index.ts` complet et documenté (269 lignes)
+- [x] Les 4 slices Zustand compilent
+- [x] Store racine créé et exporté
+- [x] Structure de dossiers complète (17 fichiers créés)
+- [x] Tailwind config avec thème Dark Ops
+- [x] Tous les fichiers ont des TODOs pour Phase 2
 
 **Commande de validation** :
 ```bash
 npm run build
 ```
 
-Si le build passe → Phase 1 terminée ✅
+✅ **Build réussi** - Phase 1 terminée !
+
+Voir [PHASE_1_COMPLETE.md](./PHASE_1_COMPLETE.md) pour le rapport détaillé.
 
 ---
 
@@ -1026,6 +1029,32 @@ Chaque feature = 1 conversation courte (~5-10k tokens).
 **Fichiers** : `MainCourante.tsx`, `logSlice.ts`
 **Objectif** : Liste scrollable des logs avec filtres
 
+### Phase 3.6 : Synoptic - Vue Linéaire ⏸️
+**Fichiers** : `Synoptic.tsx`, `networkSlice.ts`
+**Objectif** : Implémenter la vue linéaire de la ligne
+**Fonctionnalités** :
+- Se déplie automatiquement lors de la sélection d'une ligne
+- Affiche les arrêts de manière linéaire (timeline horizontale)
+- Positionne les bus sur leur segment actuel
+- Calcule l'espacement entre véhicules
+- Affiche les retards/avances par rapport à l'horaire théorique
+**Détails techniques** :
+- Connecter au `selectedRouteId` du NetworkStore
+- Calculer la position relative de chaque bus sur la ligne (0-100%)
+- Utiliser turf.lineSliceAlong() pour obtenir la distance parcourue
+- Animation smooth lors du déplacement des bus
+**Importance** : Essentiel pour la régulation du cadencement
+
+### Phase 3.7 : Régulation & Commandes ⏸️
+**Fichiers** : `fleetSlice.ts`, `Inspector.tsx`
+**Objectif** : Ajouter les actions de régulation
+**Fonctionnalités** :
+- Retard commandé (attente forcée à un arrêt)
+- Avance commandée (saut d'arrêt)
+- HLP (Hors Ligne Programmé)
+- Changement de terminus
+**Prérequis** : Phase 3.6 (Synoptic) pour visualiser l'impact
+
 *(Plus de phases détaillées au fur et à mesure)*
 
 ---
@@ -1075,25 +1104,29 @@ Beaucoup plus performant pour animer les bus.
 
 | Phase | État | Fichiers | LOC | Tokens utilisés | Date fin |
 |-------|------|----------|-----|-----------------|----------|
-| Phase 1 | ⏸️ | 0/15 | 0 | 0 | - |
+| Phase 1 | ✅ | 18/18 | ~888 | ~18k | 2026-01-05 |
 | Phase 2 | ⏸️ | 0/8 | 0 | 0 | - |
 | Phase 3+ | ⏸️ | 0/X | 0 | 0 | - |
 
-**Total progression** : 0% ⏸️
+**Total progression** : 20% (Phase 1/5 complète)
 
 ---
 
 ## 🎯 PROCHAINE ACTION
 
-**À FAIRE MAINTENANT** :
-1. Lire ce fichier `IMPLEMENTATION.md` au début de chaque session
-2. Commencer Phase 1.1 : Init Next.js
-3. Mettre à jour ce fichier après chaque feature complétée
+**Phase 1 terminée ✅**
 
-**Commande de démarrage Phase 1** :
+**À FAIRE MAINTENANT pour Phase 2** :
+1. Lire [PHASE_1_COMPLETE.md](./PHASE_1_COMPLETE.md) pour voir ce qui a été fait
+2. Implémenter MapLibre init dans `MapCanvas.tsx`
+3. Ajouter un bus statique de test dans `fleetSlice.ts`
+4. Connecter TimeControls au store temporal
+5. Tester l'interface à http://localhost:3000/pcc
+
+**Commande de démarrage** :
 ```bash
-cd /Users/simon/DEV/better-saeiv-stan
-npx create-next-app@latest . --typescript --app --tailwind --no-src
+npm run dev
+# Puis ouvrir http://localhost:3000/pcc
 ```
 
 ---
