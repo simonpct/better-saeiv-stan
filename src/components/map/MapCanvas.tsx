@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import { usePCCStore } from '@/store';
+import { getRouteDefinition } from '@/lib/constants/routes';
 
 /**
  * COMPOSANT MAPLIBRE PRINCIPAL
@@ -10,6 +11,8 @@ import { usePCCStore } from '@/store';
  * Responsabilités:
  * - Init MapLibre avec style
  * - Afficher les bus (layers)
+ * - Afficher les tracés de lignes (LineString)
+ * - Afficher les arrêts (markers)
  * - Gérer le LOD selon zoom
  * - Interactions (clic, drag)
  */
@@ -19,7 +22,7 @@ export default function MapCanvas() {
   const map = useRef<maplibregl.Map | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
-  const { vehicles, updateLOD } = usePCCStore();
+  const { vehicles, updateLOD, routes, stops } = usePCCStore();
 
   // Initialize map
   useEffect(() => {
@@ -142,6 +145,174 @@ export default function MapCanvas() {
       features,
     });
   }, [vehicles, isMapLoaded]);
+
+  // Add route layers when map loads
+  useEffect(() => {
+    if (!map.current || !isMapLoaded) return;
+
+    const currentMap = map.current;
+
+    // Add source for routes
+    if (!currentMap.getSource('routes')) {
+      currentMap.addSource('routes', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: [],
+        },
+      });
+
+      // Add layer for route lines
+      currentMap.addLayer({
+        id: 'route-lines',
+        type: 'line',
+        source: 'routes',
+        paint: {
+          'line-color': ['get', 'color'],
+          'line-width': 4,
+          'line-opacity': 0.8,
+        },
+      });
+
+      // Add layer for route outlines (for better visibility)
+      currentMap.addLayer(
+        {
+          id: 'route-lines-outline',
+          type: 'line',
+          source: 'routes',
+          paint: {
+            'line-color': '#000000',
+            'line-width': 6,
+            'line-opacity': 0.4,
+          },
+        },
+        'route-lines' // Insert below the main line layer
+      );
+    }
+
+    // Add source for stops
+    if (!currentMap.getSource('stops')) {
+      currentMap.addSource('stops', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: [],
+        },
+      });
+
+      // Add layer for stop circles
+      currentMap.addLayer({
+        id: 'stop-circles',
+        type: 'circle',
+        source: 'stops',
+        paint: {
+          'circle-radius': 6,
+          'circle-color': '#ffffff',
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#1e293b',
+        },
+      });
+
+      // Add layer for stop labels
+      currentMap.addLayer({
+        id: 'stop-labels',
+        type: 'symbol',
+        source: 'stops',
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-size': 11,
+          'text-offset': [0, 1.5],
+          'text-anchor': 'top',
+        },
+        paint: {
+          'text-color': '#ffffff',
+          'text-halo-color': '#000000',
+          'text-halo-width': 1,
+        },
+        minzoom: 14, // Only show labels when zoomed in
+      });
+
+      // Click event on stops
+      currentMap.on('click', 'stop-circles', (e) => {
+        const stopId = e.features?.[0]?.properties?.id;
+        const stopName = e.features?.[0]?.properties?.name;
+        if (stopId && stopName) {
+          // Create popup
+          new maplibregl.Popup()
+            .setLngLat(e.lngLat)
+            .setHTML(`<div class="font-bold">${stopName}</div><div class="text-sm text-gray-400">${stopId}</div>`)
+            .addTo(currentMap);
+        }
+      });
+
+      // Change cursor on hover
+      currentMap.on('mouseenter', 'stop-circles', () => {
+        currentMap.getCanvas().style.cursor = 'pointer';
+      });
+
+      currentMap.on('mouseleave', 'stop-circles', () => {
+        currentMap.getCanvas().style.cursor = '';
+      });
+    }
+  }, [isMapLoaded]);
+
+  // Update route geometries when routes change
+  useEffect(() => {
+    if (!map.current || !isMapLoaded) return;
+
+    const source = map.current.getSource('routes') as maplibregl.GeoJSONSource;
+    if (!source) return;
+
+    // Convert routes to GeoJSON features
+    const features = Object.values(routes).map((route) => {
+      const routeDef = getRouteDefinition(route.routeId);
+
+      return {
+        type: 'Feature' as const,
+        geometry: {
+          type: 'LineString' as const,
+          coordinates: route.activePath,
+        },
+        properties: {
+          routeId: route.routeId,
+          direction: route.direction,
+          color: routeDef?.color || '#3b82f6',
+        },
+      };
+    });
+
+    source.setData({
+      type: 'FeatureCollection',
+      features,
+    });
+  }, [routes, isMapLoaded]);
+
+  // Update stops when stops change
+  useEffect(() => {
+    if (!map.current || !isMapLoaded) return;
+
+    const source = map.current.getSource('stops') as maplibregl.GeoJSONSource;
+    if (!source) return;
+
+    // Convert stops to GeoJSON features
+    const features = Object.values(stops).map((stop) => ({
+      type: 'Feature' as const,
+      geometry: {
+        type: 'Point' as const,
+        coordinates: stop.position,
+      },
+      properties: {
+        id: stop.id,
+        name: stop.name,
+        code: stop.code,
+      },
+    }));
+
+    source.setData({
+      type: 'FeatureCollection',
+      features,
+    });
+  }, [stops, isMapLoaded]);
 
   return (
     <div className="relative w-full h-full">

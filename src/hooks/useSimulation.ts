@@ -7,13 +7,12 @@ import { usePCCStore } from '@/store';
  * HOOK DE SIMULATION
  *
  * Gère la boucle de temps virtuel (game loop)
- *
- * TODO Phase 2: Implémenter la logique de tick
- * TODO Phase 3: Ajouter updateVehiclesLogic
+ * - Tick du temps virtuel
+ * - Mise à jour de la physique des véhicules
  */
 
 export function useSimulation() {
-  const { virtualTime, timeScale, isPaused, tick } = usePCCStore();
+  const { virtualTime, timeScale, isPaused, tick, updateVehiclesLogic } = usePCCStore();
 
   useEffect(() => {
     if (isPaused) return;
@@ -25,8 +24,14 @@ export function useSimulation() {
       const deltaTime = (currentTime - lastTime) / 1000; // secondes
       lastTime = currentTime;
 
-      // Tick avec la vitesse de simulation
-      tick(deltaTime * timeScale);
+      // Calculate virtual delta time (with time scale applied)
+      const virtualDeltaTime = deltaTime * timeScale;
+
+      // Update virtual time
+      tick(virtualDeltaTime);
+
+      // Update vehicle positions along routes
+      updateVehiclesLogic(virtualDeltaTime);
 
       animationId = requestAnimationFrame(loop);
     };
@@ -34,7 +39,7 @@ export function useSimulation() {
     animationId = requestAnimationFrame(loop);
 
     return () => cancelAnimationFrame(animationId);
-  }, [isPaused, timeScale, tick]);
+  }, [isPaused, timeScale, tick, updateVehiclesLogic]);
 
   return { virtualTime, timeScale, isPaused };
 }

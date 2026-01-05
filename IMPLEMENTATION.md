@@ -1,8 +1,8 @@
 # 🚀 IMPLEMENTATION ROADMAP - SAEIV Next-Gen
 
 **Dernière mise à jour** : 2026-01-05
-**Phase actuelle** : Phase 3.2 - Terminée ✅
-**Progression globale** : 45%
+**Phase actuelle** : Phase 3.1 - Terminée ✅
+**Progression globale** : 55%
 
 ---
 
@@ -1016,30 +1016,54 @@ Voir [PHASE_2_COMPLETE.md](./PHASE_2_COMPLETE.md) pour le rapport détaillé.
 
 Chaque feature = 1 conversation courte (~5-10k tokens).
 
-### Phase 3.1 : Mouvement des Bus ⏸️
-**Fichiers** : `fleetSlice.ts`, `lib/engine/movement.ts`
-**Objectif** : Bus se déplacent le long du tracé GTFS
-
-### Phase 3.2 : API OSM Overpass ✅
+### Phase 3.1 : Mouvement des Bus ✅
 **État** : ✅ TERMINÉE
 **Date** : 2026-01-05
-**Fichiers** : [app/api/osm/overpass/route.ts](src/app/api/osm/overpass/route.ts) (340 lignes)
-**Rapport** : [PHASE_3.2_COMPLETE.md](PHASE_3.2_COMPLETE.md)
+**Fichiers** : [lib/engine/movement.ts](src/lib/engine/movement.ts), [store/slices/fleetSlice.ts](src/store/slices/fleetSlice.ts)
+**Rapport** : [PHASE_3_COMPLETE.md](PHASE_3_COMPLETE.md)
+
+**Fonctionnalités livrées** :
+- ✅ Moteur de calcul de mouvement avec Turf.js
+- ✅ `calculateNewDistance()` - Physique de mouvement
+- ✅ `getPositionAtDistance()` - Position via turf.along()
+- ✅ `updateBusPosition()` - Mise à jour position + heading
+- ✅ `hasReachedEnd()` - Détection terminus
+- ✅ `updateVehiclesLogic()` - Boucle de mise à jour
+- ✅ `assignBusToRoute()` - Assignation bus → ligne
+- ✅ Intégration avec simulation loop (60 FPS)
+- ✅ Support time scale (×1 à ×60)
+- ✅ Tracking distance sur tracé + odomètre
+
+**Performance** :
+- 60 FPS maintenu avec 1 bus
+- Calculs Turf.js : <1ms par bus
+- Distance T1 complète : ~14 min à ×60
+
+### Phase 3.2 : API OSM Overpass + Visualisation ✅
+**État** : ✅ TERMINÉE
+**Date** : 2026-01-05
+**Fichiers** :
+- [app/api/osm/overpass/route.ts](src/app/api/osm/overpass/route.ts) (340 lignes)
+- [store/slices/networkSlice.ts](src/store/slices/networkSlice.ts) (Phase 3.2b)
+- [components/map/MapCanvas.tsx](src/components/map/MapCanvas.tsx) (Phase 3.2c)
+**Rapport** : [PHASE_3_COMPLETE.md](PHASE_3_COMPLETE.md)
 
 **Fonctionnalités livrées** :
 - ✅ Endpoint `/api/osm/overpass?routeId=T1&direction=aller`
-- ✅ Requête Overpass optimisée (instance Kumi Systems)
 - ✅ Parser OSM → GeoJSON LineString (600+ points par ligne)
-- ✅ Extraction automatique des arrêts (25 arrêts T1 aller)
 - ✅ Cache en mémoire (15 min TTL)
-- ✅ Gestion complète des erreurs (timeout 60s, validation params)
-- ✅ Testé avec données réelles (T1 aller/retour)
+- ✅ `loadRoute()` action NetworkStore
+- ✅ Layers MapLibre (routes + arrêts)
+- ✅ Visualisation tracés colorés par ligne
+- ✅ Markers arrêts cliquables avec popup
+- ✅ Labels arrêts (LOD zoom 14+)
+- ✅ Auto-chargement T1 au démarrage
 
 **Performance** :
-- Première requête : 8-10s
+- Première requête Overpass : 8-10s
 - Requêtes cachées : <100ms
-- 633 points géographiques (T1 aller, 13.93 km)
-- 619 points géographiques (T1 retour, 22.46 km)
+- 633 points (T1 aller, 13.93 km)
+- 25 arrêts extraits
 
 ### Phase 3.3 : LOD System ⏸️
 **Fichiers** : `MapCanvas.tsx`, `fleetSlice.ts`
@@ -1336,10 +1360,11 @@ function applyDeviations(basePath: GeoPoint[], deviations: Deviation[]): GeoPoin
 |-------|------|----------|-----|-----------------|----------|
 | Phase 1 | ✅ | 18/18 | ~888 | ~18k | 2026-01-05 |
 | Phase 2 | ✅ | 6/6 modifiés | ~1,236 | ~22k | 2026-01-05 |
-| Phase 3.2 | ✅ | 1 créé | 340 | ~8k | 2026-01-05 |
+| Phase 3.1 | ✅ | 1 créé + 2 modifiés | ~400 | ~12k | 2026-01-05 |
+| Phase 3.2 | ✅ | 1 créé + 3 modifiés | ~540 | ~15k | 2026-01-05 |
 | Phase 3+ | ⏸️ | 0/X | 0 | 0 | - |
 
-**Total progression** : 45% (Phases 1, 2, 3.2 complètes)
+**Total progression** : 55% (Phases 1, 2, 3.1, 3.2 complètes)
 
 ---
 
@@ -1362,21 +1387,25 @@ function applyDeviations(basePath: GeoPoint[], deviations: Deviation[]): GeoPoin
    - Prêt pour Phase 3.2 (API OSM Overpass)
 2. Lire [PHASE_2_COMPLETE.md](./PHASE_2_COMPLETE.md) pour voir la démo actuelle
 
-**ORDRE RECOMMANDÉ Phase 3** :
-1. ✅ **Phase 3.2** : API OSM Overpass (TERMINÉE)
+**PHASES COMPLÈTES** ✅ :
+1. ✅ **Phase 3.2** : API OSM Overpass + Visualisation (TERMINÉE)
    - ✅ Endpoint `/api/osm/overpass` créé et testé
    - ✅ Parser OSM → GeoJSON fonctionnel (600+ points)
    - ✅ Cache 15 min implémenté
-   - ✅ Testé avec T1 aller/retour (13.93 km / 22.46 km)
-   - ✅ Voir [PHASE_3.2_COMPLETE.md](PHASE_3.2_COMPLETE.md)
+   - ✅ NetworkStore `loadRoute()` action
+   - ✅ Visualisation routes + arrêts sur MapLibre
+   - ✅ Voir [PHASE_3_COMPLETE.md](PHASE_3_COMPLETE.md)
 
-2. **Phase 3.1** : Mouvement des bus (PRIORITÉ ACTUELLE)
-   - Connecter NetworkStore à l'API Overpass
-   - Charger les tracés au démarrage
-   - Implémenter `turf.along()` pour le mouvement
-   - Animation fluide le long du tracé OSM
-   - Gestion de la distance parcourue
+2. ✅ **Phase 3.1** : Mouvement des bus (TERMINÉE)
+   - ✅ Moteur de mouvement avec Turf.js
+   - ✅ `turf.along()` pour position sur tracé
+   - ✅ `turf.bearing()` pour heading
+   - ✅ Animation fluide 60 FPS
+   - ✅ Support time scale ×1 à ×60
+   - ✅ Bus se déplace sur T1 aller (13.93 km)
+   - ✅ Voir [PHASE_3_COMPLETE.md](PHASE_3_COMPLETE.md)
 
+**PROCHAINE PRIORITÉ** :
 3. **Phase 3.6** : Synoptic (vue linéaire)
    - Visualisation essentielle pour la régulation
    - Affichage des bus sur la ligne
@@ -1394,10 +1423,14 @@ npm run dev
 # Accéder au PCC
 http://localhost:3000/pcc
 
-# Test : Cliquer sur le bus bleu à Nancy
-# → L'Inspector affiche la télémétrie
-# → Play : l'horloge avance
-# → ×60 : temps accéléré
+# Ce que vous verrez :
+# 1. Ligne T1 rouge sur la carte (13.93 km)
+# 2. 25 arrêts marqués sur la ligne
+# 3. Bus bleu qui se déplace le long de T1
+# 4. Cliquer sur le bus → Inspector affiche télémétrie
+# 5. Play ▶️ → Bus avance
+# 6. ×60 → Bus complète la ligne en ~14 minutes
+# 7. Cliquer arrêt → Popup avec nom
 ```
 
 **Roadmap complète** : 19 phases définies (3.1 → 3.19)

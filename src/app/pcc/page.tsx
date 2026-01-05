@@ -1,11 +1,13 @@
 'use client';
 
+import { useEffect } from 'react';
 import MapCanvas from '@/components/map/MapCanvas';
 import Inspector from '@/components/panels/Inspector';
 import MainCourante from '@/components/panels/MainCourante';
 import Synoptic from '@/components/panels/Synoptic';
 import TimeControls from '@/components/controls/TimeControls';
 import { useSimulation } from '@/hooks/useSimulation';
+import { usePCCStore } from '@/store';
 
 /**
  * PAGE PRINCIPALE DU PCC
@@ -19,8 +21,16 @@ import { useSimulation } from '@/hooks/useSimulation';
  */
 
 export default function PCCPage() {
+  const { loadRoute } = usePCCStore();
+
   // Start simulation loop
   useSimulation();
+
+  // Load T1 route on startup (for demo)
+  useEffect(() => {
+    console.log('[PCCPage] Loading T1 route on startup...');
+    loadRoute('T1', 'ALLER');
+  }, [loadRoute]);
 
   return (
     <div className="h-screen flex flex-col bg-ops-bg text-ops-text">
@@ -43,9 +53,9 @@ export default function PCCPage() {
         </main>
 
         {/* Main Courante (droite) */}
-        <aside className="w-96 bg-ops-panel border-l border-ops-border overflow-y-auto">
+        {/* <aside className="w-96 bg-ops-panel border-l border-ops-border overflow-y-auto">
           <MainCourante />
-        </aside>
+        </aside> */}
 
         {/* Synoptic (bas, rétractable - position fixed) */}
         <Synoptic />
