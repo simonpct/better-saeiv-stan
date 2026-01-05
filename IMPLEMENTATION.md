@@ -1,8 +1,8 @@
 # 🚀 IMPLEMENTATION ROADMAP - SAEIV Next-Gen
 
 **Dernière mise à jour** : 2026-01-05
-**Phase actuelle** : Phase 2 - Terminée ✅
-**Progression globale** : 40%
+**Phase actuelle** : Phase 3.2 - Terminée ✅
+**Progression globale** : 45%
 
 ---
 
@@ -1020,9 +1020,26 @@ Chaque feature = 1 conversation courte (~5-10k tokens).
 **Fichiers** : `fleetSlice.ts`, `lib/engine/movement.ts`
 **Objectif** : Bus se déplacent le long du tracé GTFS
 
-### Phase 3.2 : API GTFS Nancy ⏸️
-**Fichiers** : `app/api/gtfs/nancy/route.ts`
-**Objectif** : Charger lignes Stan depuis JSON pré-traité
+### Phase 3.2 : API OSM Overpass ✅
+**État** : ✅ TERMINÉE
+**Date** : 2026-01-05
+**Fichiers** : [app/api/osm/overpass/route.ts](src/app/api/osm/overpass/route.ts) (340 lignes)
+**Rapport** : [PHASE_3.2_COMPLETE.md](PHASE_3.2_COMPLETE.md)
+
+**Fonctionnalités livrées** :
+- ✅ Endpoint `/api/osm/overpass?routeId=T1&direction=aller`
+- ✅ Requête Overpass optimisée (instance Kumi Systems)
+- ✅ Parser OSM → GeoJSON LineString (600+ points par ligne)
+- ✅ Extraction automatique des arrêts (25 arrêts T1 aller)
+- ✅ Cache en mémoire (15 min TTL)
+- ✅ Gestion complète des erreurs (timeout 60s, validation params)
+- ✅ Testé avec données réelles (T1 aller/retour)
+
+**Performance** :
+- Première requête : 8-10s
+- Requêtes cachées : <100ms
+- 633 points géographiques (T1 aller, 13.93 km)
+- 619 points géographiques (T1 retour, 22.46 km)
 
 ### Phase 3.3 : LOD System ⏸️
 **Fichiers** : `MapCanvas.tsx`, `fleetSlice.ts`
@@ -1062,7 +1079,136 @@ Chaque feature = 1 conversation courte (~5-10k tokens).
 - Changement de terminus
 **Prérequis** : Phase 3.6 (Synoptic) pour visualiser l'impact
 
-*(Plus de phases détaillées au fur et à mesure)*
+### Phase 3.8 : Gestion du Dépôt ⏸️
+**Fichiers** : `fleetSlice.ts`, `components/panels/Depot.tsx`
+**Objectif** : Gérer les véhicules au dépôt
+**Fonctionnalités** :
+- Définir zones de parking OSM (polygones)
+- Affectation bus ↔ places de stationnement
+- État IDLE avec position au dépôt
+- Interface de déploiement/retrait de bus en service
+- Visualisation du dépôt sur la carte
+**Technique** : Utiliser Overpass pour récupérer les zones `amenity=parking` + `operator=Stan`
+
+### Phase 3.9 : Physique Multi-Segments ⏸️
+**Fichiers** : `lib/engine/movement.ts`, `MapCanvas.tsx`
+**Objectif** : Rendu réaliste des bus articulés
+**Fonctionnalités** :
+- Calcul positions de tous les segments (tracteur + remorques)
+- Angles d'articulation réalistes (contraintes physiques)
+- Rendu visuel avec liaisons articulées
+- Animation fluide des articulations
+**Technique** : Géométrie inverse pour calculer positions des remorques à partir du tracteur
+
+### Phase 3.10 : Calcul de Cadencement ⏸️
+**Fichiers** : `lib/engine/headway.ts`, `components/panels/HeadwayMonitor.tsx`
+**Objectif** : Analyser et optimiser le cadencement
+**Fonctionnalités** :
+- Calcul de l'intervalle moyen entre bus
+- Détection d'irrégularités (bunching = regroupement)
+- Calcul de la variance du cadencement
+- Suggestions de régulation automatiques
+- Graphique temps réel du cadencement
+**Importance** : Métrique clé de qualité de service
+
+### Phase 3.11 : Détection de Conflits ⏸️
+**Fichiers** : `lib/engine/conflicts.ts`, `logSlice.ts`
+**Objectif** : Détecter les situations problématiques
+**Fonctionnalités** :
+- Distance inter-véhicules en temps réel
+- Alertes si 2 bus trop proches (< 200m)
+- Détection de dépassements (bus arrive avant celui de devant)
+- Visualisation zone critique sur Synoptic
+- Logs automatiques des conflits
+**Technique** : Calcul de distance curviligne le long du tracé
+
+### Phase 3.12 : Interface Création de Déviations ⏸️
+**Fichiers** : `components/controls/DeviationTool.tsx`, `MapCanvas.tsx`
+**Objectif** : Permettre au régulateur de créer des déviations
+**Fonctionnalités** :
+- Mode dessin sur la carte (clic pour placer points)
+- Sélection début/fin de déviation sur tracé
+- Preview du nouveau tracé
+- Validation et activation
+- Désactivation/suppression
+- Raison de la déviation (travaux, accident, etc.)
+**UX** : Interface inspirée des outils de dessin CAO
+
+### Phase 3.13 : Terminus Dynamiques ⏸️
+**Fichiers** : `fleetSlice.ts`, `networkSlice.ts`
+**Objectif** : Modifier le terminus d'un bus en cours de service
+**Fonctionnalités** :
+- Sélection nouveau terminus (arrêt intermédiaire)
+- Recalcul du tracé (tronçon du tracé original)
+- Mise à jour temps de parcours estimé
+- Notification au conducteur virtuel
+- Impact sur les horaires suivants
+**Cas d'usage** : Régulation en cas de retard important
+
+### Phase 3.14 : Mode Replay ⏸️
+**Fichiers** : `hooks/useRecorder.ts`, `temporalSlice.ts`
+**Objectif** : Enregistrer et rejouer des sessions
+**Fonctionnalités** :
+- Enregistrement de tous les événements (state snapshots)
+- Export JSON de l'historique complet
+- Import et rejeu d'une session
+- Contrôles de lecture (play/pause/seek)
+- Vitesse de rejeu variable
+**Cas d'usage** : Formation, analyse post-mortem, debug
+
+### Phase 3.15 : Simulation Trafic Routier ⏸️
+**Fichiers** : `lib/engine/traffic.ts`, `networkSlice.ts`
+**Objectif** : Modulation réaliste de la vitesse
+**Fonctionnalités** :
+- Segmentation des tracés (vitesse par segment)
+- Simulation feux tricolores (délais aléatoires 30-90s)
+- Zones de congestion (rush hours)
+- Impact sur temps de parcours
+- Visualisation des zones lentes sur carte
+**Technique** : Attributs OSM `maxspeed`, segments routiers
+
+### Phase 3.16 : Export & Rapports ⏸️
+**Fichiers** : `lib/utils/export.ts`, `components/panels/Reports.tsx`
+**Objectif** : Générer des rapports de régulation
+**Fonctionnalités** :
+- Export PDF du journal (Main Courante)
+- Graphiques de performance (cadencement, ponctualité)
+- Statistiques de régulation (nb commandes, impact)
+- Export CSV des événements
+- Rapport de fin de journée
+**Technique** : jsPDF + Chart.js
+
+### Phase 3.17 : Multi-Lignes (Vue Réseau) ⏸️
+**Fichiers** : `MapCanvas.tsx`, `fleetSlice.ts`, `components/panels/NetworkOverview.tsx`
+**Objectif** : Afficher et gérer plusieurs lignes simultanément
+**Fonctionnalités** :
+- Affichage de toutes les lignes Stan sur la carte
+- Sélection/désélection de lignes (filtres)
+- Vue d'ensemble du réseau (matrice lignes × véhicules)
+- Performance avec 50+ bus simultanés
+- Layers séparés par ligne
+**Challenge** : Maintenir 60 FPS avec beaucoup de véhicules
+
+### Phase 3.18 : Optimisation WebWorker ⏸️
+**Fichiers** : `workers/simulation.worker.ts`, `hooks/useSimulation.ts`
+**Objectif** : Déporter calculs lourds hors du thread principal
+**Fonctionnalités** :
+- WebWorker pour calcul physique (mouvement, télémétrie)
+- Communication efficace main ↔ worker (Transferable objects)
+- Synchronisation state Zustand ↔ Worker
+- Maintien 60 FPS avec 100+ véhicules
+**Technique** : Comlink pour simplifier worker communication
+
+### Phase 3.19 : Mode Collaboratif (optionnel) ⏸️
+**Fichiers** : `lib/sync/websocket.ts`, `app/api/ws/route.ts`
+**Objectif** : Multi-utilisateurs en temps réel
+**Fonctionnalités** :
+- WebSocket pour sync en temps réel
+- Gestion de rôles (régulateur 1, 2, superviseur)
+- Merge de commandes concurrentes
+- Curseurs des autres utilisateurs sur carte
+- Chat entre régulateurs
+**Technique** : Next.js API Routes + ws, Yjs pour CRDT
 
 ---
 
@@ -1080,6 +1226,37 @@ Chaque feature = 1 conversation courte (~5-10k tokens).
 **Raison** : Meilleur contrôle du thème Dark Ops
 **TODO** : Choisir entre Maptiler ou self-hosted OSM tiles
 
+### DT-003 : OSM/Overpass pour les tracés de lignes ⭐ **NOUVELLE**
+**Date** : 2026-01-05
+**Décision** : Utiliser OpenStreetMap relations via Overpass API pour les tracés
+**Raison** :
+- OSM contient déjà les tracés précis des lignes Stan
+- Relations OSM = 1 relation par sens (aller/retour)
+- Données communautaires mises à jour
+- Pas besoin de maintenir un GTFS shapes.txt
+**Architecture** :
+- Liste hard-coded des lignes dans `src/lib/constants/routes.ts`
+- Chaque ligne = 2 IDs de relations OSM (aller + retour)
+- Cache des géométries via API route `/api/osm/overpass`
+- GTFS utilisé uniquement pour les horaires (stop_times.txt)
+**Avantages** :
+- Données géographiques précises et à jour
+- Gestion native des déviations (remplacement de segments)
+- Possibilité de récupérer attributs routiers (vitesse max, etc.)
+**Cache** :
+- Réponses Overpass en cache (15 min)
+- Stockage local des géométries en IndexedDB
+
+### DT-004 : Gestion des déviations sur tracés OSM
+**Date** : 2026-01-05
+**Décision** : Système de remplacement de segments de path
+**Implémentation** :
+- Chaque déviation définit un segment du tracé à remplacer (start/end index)
+- Calcul du `activePath` = basePath avec segments remplacés
+- Bus suivent le `activePath` au lieu du `basePath`
+- Plusieurs déviations peuvent coexister (segments disjoints)
+**Avantage** : Flexibilité maximale pour gérer travaux, accidents, etc.
+
 ---
 
 ## 📝 NOTES D'IMPLÉMENTATION
@@ -1094,6 +1271,52 @@ MapLibre attend aussi [lon, lat]. Ne jamais inverser.
 ### NI-003 : Performance MapLibre
 **Astuce** : Utiliser `map.setData()` sur la source, pas `removeLayer/addLayer`.
 Beaucoup plus performant pour animer les bus.
+
+### NI-004 : Requêtes Overpass API ⭐ **NOUVELLE**
+**Endpoint** : `https://overpass-api.de/api/interpreter`
+**Format de requête** pour une relation :
+```
+[out:json];
+relation(1234567);
+(._;>;);
+out geom;
+```
+**Parsing** :
+- Récupérer les members de type "way"
+- Assembler les nodes dans l'ordre pour créer le LineString
+- Extraire les nodes de type "stop" pour les arrêts
+**Limites** :
+- Rate limit : 2 requêtes/seconde max
+- Timeout : 180s par défaut
+- Faire du caching agressif (15 min minimum)
+
+### NI-005 : Application des déviations
+**Algorithme** :
+```typescript
+function applyDeviations(basePath: GeoPoint[], deviations: Deviation[]): GeoPoint[] {
+  let activePath = [...basePath];
+
+  for (const dev of deviations.filter(d => d.active)) {
+    const { startPointIndex, endPointIndex, alternativePath } = dev.segment;
+    activePath = [
+      ...activePath.slice(0, startPointIndex),
+      ...alternativePath,
+      ...activePath.slice(endPointIndex + 1)
+    ];
+  }
+
+  return activePath;
+}
+```
+**Important** : Trier les déviations par ordre décroissant de `startPointIndex` pour éviter les conflits d'index.
+
+### NI-006 : Mouvement bus sur tracé avec déviations
+**Algorithme** :
+1. Bus a un `activePath` (= basePath + déviations appliquées)
+2. Bus a une `distanceOnPath` (en mètres depuis le début)
+3. Utiliser `turf.along(lineString, distance)` pour obtenir la position actuelle
+4. Chaque tick : `distanceOnPath += speed * deltaTime`
+5. Si `distanceOnPath >= totalDistance` → bus arrive au terminus
 
 ---
 
@@ -1113,9 +1336,10 @@ Beaucoup plus performant pour animer les bus.
 |-------|------|----------|-----|-----------------|----------|
 | Phase 1 | ✅ | 18/18 | ~888 | ~18k | 2026-01-05 |
 | Phase 2 | ✅ | 6/6 modifiés | ~1,236 | ~22k | 2026-01-05 |
+| Phase 3.2 | ✅ | 1 créé | 340 | ~8k | 2026-01-05 |
 | Phase 3+ | ⏸️ | 0/X | 0 | 0 | - |
 
-**Total progression** : 40% (Phases 1-2 complètes)
+**Total progression** : 45% (Phases 1, 2, 3.2 complètes)
 
 ---
 
@@ -1125,11 +1349,42 @@ Beaucoup plus performant pour animer les bus.
 
 **Vertical Slice MVP fonctionnel !**
 
-**À FAIRE MAINTENANT pour Phase 3** :
-1. Lire [PHASE_2_COMPLETE.md](./PHASE_2_COMPLETE.md) pour voir la démo
-2. Choisir une feature atomique (3.1 à 3.7)
-3. Implémenter la feature en isolation
-4. Tester et valider
+**ARCHITECTURE OSM/OVERPASS DÉFINIE ⭐**
+- Types mis à jour ([types/index.ts](src/types/index.ts))
+- Nouvelle architecture réseau avec relations OSM
+- Système de déviations sur segments de tracé
+- Liste hard-coded des lignes dans [lib/constants/routes.ts](src/lib/constants/routes.ts)
+
+**AVANT DE COMMENCER PHASE 3** :
+1. ✅ **IDs de relations OSM remplis** dans [lib/constants/routes.ts](src/lib/constants/routes.ts)
+   - 5 lignes Tempo (T1 à T5) configurées
+   - Relations aller/retour pour chaque ligne
+   - Prêt pour Phase 3.2 (API OSM Overpass)
+2. Lire [PHASE_2_COMPLETE.md](./PHASE_2_COMPLETE.md) pour voir la démo actuelle
+
+**ORDRE RECOMMANDÉ Phase 3** :
+1. ✅ **Phase 3.2** : API OSM Overpass (TERMINÉE)
+   - ✅ Endpoint `/api/osm/overpass` créé et testé
+   - ✅ Parser OSM → GeoJSON fonctionnel (600+ points)
+   - ✅ Cache 15 min implémenté
+   - ✅ Testé avec T1 aller/retour (13.93 km / 22.46 km)
+   - ✅ Voir [PHASE_3.2_COMPLETE.md](PHASE_3.2_COMPLETE.md)
+
+2. **Phase 3.1** : Mouvement des bus (PRIORITÉ ACTUELLE)
+   - Connecter NetworkStore à l'API Overpass
+   - Charger les tracés au démarrage
+   - Implémenter `turf.along()` pour le mouvement
+   - Animation fluide le long du tracé OSM
+   - Gestion de la distance parcourue
+
+3. **Phase 3.6** : Synoptic (vue linéaire)
+   - Visualisation essentielle pour la régulation
+   - Affichage des bus sur la ligne
+   - Calcul du cadencement
+
+4. **Phase 3.12** : Interface déviations
+   - Outil de dessin sur carte
+   - Application des déviations aux tracés
 
 **Commandes utiles** :
 ```bash
@@ -1145,10 +1400,7 @@ http://localhost:3000/pcc
 # → ×60 : temps accéléré
 ```
 
-**Features prioritaires Phase 3** :
-- 3.1 : Mouvement des bus (animation)
-- 3.2 : API GTFS Nancy (données réelles)
-- 3.6 : Synoptic (vue linéaire)
+**Roadmap complète** : 19 phases définies (3.1 → 3.19)
 
 ---
 

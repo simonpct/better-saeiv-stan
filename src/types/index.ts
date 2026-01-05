@@ -77,25 +77,34 @@ export interface Bus {
   status: VehicleStatus;
   segments: BusSegment[]; // 1 pour STANDARD, 2 pour ARTICULATED, 3 pour BI_ARTICULATED
   telemetry: BusTelemetry;
-  assignedRouteId?: string; // ID de la ligne GTFS
+  assignedRouteId?: string; // ID de la ligne (ex: "L1", "T1")
+  assignedDirection?: Direction; // Sens de circulation actuel
   assignedTripId?: string; // ID du trip GTFS en cours
-  currentStopIndex?: number; // Index dans le trip
+  currentStopIndex?: number; // Index de l'arrêt actuel dans le tracé
+  activePath?: GeoPoint[]; // Tracé actif suivi (avec déviations appliquées)
+  distanceOnPath?: number; // Distance parcourue sur le tracé actif (en mètres)
   parkingSpaceId?: string; // ID OSM de la place de parking (si IDLE)
   speed: number; // km/h
 }
 
 // ============================================================================
-// GTFS & RÉSEAU
+// OSM & RÉSEAU
 // ============================================================================
 
 /**
- * Arrêt de bus (depuis GTFS stops.txt)
+ * Direction d'une ligne
+ */
+export type Direction = 'ALLER' | 'RETOUR';
+
+/**
+ * Arrêt de bus (depuis OSM ou GTFS)
  */
 export interface Stop {
-  id: string; // stop_id du GTFS
+  id: string; // ID unique (peut être OSM node ID ou GTFS stop_id)
+  osmId?: string; // ID du node OSM si disponible
   name: string;
   position: GeoPoint;
-  code?: string; // Code physique affiché à l'arrêt
+  code?: string; // Code physique affiché à l'arrêt (ex: "STA001")
 }
 
 /**
@@ -114,30 +123,63 @@ export interface StopTime {
 export interface Trip {
   id: string; // trip_id du GTFS
   routeId: string; // Lien vers la ligne
+  direction: Direction; // Sens du trip
   serviceId: string; // Calendrier (weekday, weekend, etc.)
   stopTimes: StopTime[];
   shapeId?: string;
 }
 
 /**
- * Route/Ligne GTFS
+ * Définition d'une ligne de transport
+ * Utilisée pour la liste hard-coded des lignes Stan
  */
-export interface Route {
-  id: string; // route_id
-  shortName: string; // "T1", "T2", etc.
-  longName: string; // "Tram Ligne 1 : ..."
-  type: number; // 0=tram, 3=bus, etc.
-  color: string; // Hex color "#FF6600"
-  textColor: string; // "#FFFFFF"
+export interface RouteDefinition {
+  id: string; // ID interne (ex: "L1", "T1")
+  shortName: string; // Nom court : "1", "T1", "A"
+  longName: string; // Nom complet : "Ligne 1 : Essey-lès-Nancy - Villers"
+  type: 'tram' | 'bus' | 'trolleybus'; // Type de véhicule
+  color: string; // Couleur hex "#FF6600"
+  textColor: string; // Couleur texte "#FFFFFF"
+  osmRelations: {
+    aller: number; // ID de la relation OSM pour l'aller
+    retour: number; // ID de la relation OSM pour le retour
+  };
 }
 
 /**
- * Géométrie d'une route (tracé sur la carte)
+ * Relation OSM parsée depuis Overpass
+ */
+export interface OSMRelation {
+  id: number; // ID de la relation OSM
+  routeId: string; // Lien vers RouteDefinition
+  direction: Direction;
+  path: GeoPoint[]; // LineString coordinates du tracé
+  stops: string[]; // IDs des stops dans l'ordre
+  distance: number; // Distance totale en mètres
+  fetchedAt: Date; // Timestamp du cache
+}
+
+/**
+ * Géométrie active d'une route (avec déviations appliquées)
  */
 export interface RouteGeometry {
   routeId: string;
-  path: GeoPoint[]; // LineString coordinates
+  direction: Direction;
+  osmRelationId: number; // Relation OSM source
+  basePath: GeoPoint[]; // Tracé OSM original
+  activePath: GeoPoint[]; // Tracé actif (avec déviations si applicable)
   stops: string[]; // IDs des stops dans l'ordre
+  activeDeviations: string[]; // IDs des déviations actives sur ce tracé
+}
+
+/**
+ * Segment de déviation
+ * Permet de définir précisément où commence et finit la déviation
+ */
+export interface DeviationSegment {
+  startPointIndex: number; // Index dans le path original
+  endPointIndex: number; // Index dans le path original
+  alternativePath: GeoPoint[]; // Nouveau tracé entre ces 2 points
 }
 
 /**
@@ -146,11 +188,12 @@ export interface RouteGeometry {
 export interface Deviation {
   id: string;
   routeId: string;
-  startStopId: string;
-  endStopId: string;
-  alternativePath: GeoPoint[];
+  direction: Direction; // La déviation s'applique à un sens spécifique
+  segment: DeviationSegment;
+  reason?: string; // Raison de la déviation (travaux, accident, etc.)
   active: boolean;
   createdAt: Date;
+  createdBy?: string; // ID du régulateur qui l'a créée
 }
 
 // ============================================================================
@@ -199,21 +242,32 @@ export interface PerformanceMetrics {
 // ============================================================================
 
 /**
- * Réponse de l'API /api/gtfs/nancy/routes
+ * Réponse de l'API /api/routes (liste des lignes Stan)
  */
-export interface GTFSRoutesResponse {
-  routes: Route[];
+export interface RoutesListResponse {
+  routes: RouteDefinition[];
   totalCount: number;
 }
 
 /**
- * Réponse de l'API /api/gtfs/nancy/route/[id]
+ * Réponse de l'API /api/osm/overpass (tracé OSM d'une ligne)
+ */
+export interface OSMRouteResponse {
+  route: RouteDefinition;
+  relations: {
+    aller: OSMRelation;
+    retour: OSMRelation;
+  };
+  stops: Stop[];
+}
+
+/**
+ * Réponse de l'API /api/gtfs/route/[id] (données GTFS pour horaires)
  */
 export interface GTFSRouteDetailResponse {
-  route: Route;
-  geometry: RouteGeometry;
-  stops: Stop[];
+  route: RouteDefinition;
   trips: Trip[];
+  stops: Stop[];
 }
 
 /**
