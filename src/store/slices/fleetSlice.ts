@@ -21,7 +21,35 @@ export const createFleetSlice: StateCreator<
   [],
   FleetSlice
 > = (set, get) => ({
-  vehicles: {},
+  // Bus de test statique à Nancy - Place Stanislas
+  vehicles: {
+    'bus-001': {
+      id: 'bus-001',
+      type: 'STANDARD',
+      status: 'IN_SERVICE',
+      segments: [
+        {
+          id: 'tracteur',
+          length: 12,
+          width: 2.5,
+          currentHeading: 45,
+          currentPosition: [6.18, 48.68], // Place Stanislas
+        },
+      ],
+      telemetry: {
+        energyLevel: 85,
+        energyType: 'ELECTRIC',
+        doors: [false, false, false, false],
+        engineTemp: 75,
+        alerts: {
+          abs: false,
+          overheat: false,
+        },
+        odometer: 12450,
+      },
+      speed: 0,
+    },
+  },
   selectedEntityId: null,
   lodLevel: 'full',
 

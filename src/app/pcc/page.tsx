@@ -1,8 +1,11 @@
+'use client';
+
 import MapCanvas from '@/components/map/MapCanvas';
 import Inspector from '@/components/panels/Inspector';
 import MainCourante from '@/components/panels/MainCourante';
 import Synoptic from '@/components/panels/Synoptic';
 import TimeControls from '@/components/controls/TimeControls';
+import { useSimulation } from '@/hooks/useSimulation';
 
 /**
  * PAGE PRINCIPALE DU PCC
@@ -16,6 +19,9 @@ import TimeControls from '@/components/controls/TimeControls';
  */
 
 export default function PCCPage() {
+  // Start simulation loop
+  useSimulation();
+
   return (
     <div className="h-screen flex flex-col bg-ops-bg text-ops-text">
       {/* Header */}

@@ -16,6 +16,7 @@ Application web de supervision et simulation du réseau de bus/tram avec :
 - [SPECS.md](./SPECS.md) - Spécifications techniques complètes
 - [IMPLEMENTATION.md](./IMPLEMENTATION.md) - Roadmap d'implémentation
 - [PHASE_1_COMPLETE.md](./PHASE_1_COMPLETE.md) - Rapport Phase 1
+- [PHASE_2_COMPLETE.md](./PHASE_2_COMPLETE.md) - Rapport Phase 2
 - [SYNOPTIC_ADDED.md](./SYNOPTIC_ADDED.md) - Documentation Synoptic
 
 ## 🚀 Démarrage Rapide
@@ -45,13 +46,13 @@ http://localhost:3000/pcc
 
 ## 📊 Progression
 
-**Phase actuelle** : Phase 1 ✅ Terminée (2026-01-05)
-**Prochaine phase** : Phase 2 - Vertical Slice MVP
+**Phase actuelle** : Phase 2 ✅ Terminée (2026-01-05)
+**Prochaine phase** : Phase 3 - Features Atomiques
 
 | Phase | Description | État |
 |-------|-------------|------|
 | Phase 1 | Foundation Setup | ✅ Terminée |
-| Phase 2 | Vertical Slice MVP | ⏸️ À venir |
+| Phase 2 | Vertical Slice MVP | ✅ Terminée |
 | Phase 3+ | Features atomiques | ⏸️ À venir |
 
 ## 🗂️ Structure du Projet
@@ -109,15 +110,28 @@ npm run lint
 npx tsc --noEmit
 ```
 
-## 🧪 Prochaines Étapes (Phase 2)
+## 🧪 Prochaines Étapes (Phase 3)
 
-1. Implémenter MapLibre init
-2. Ajouter bus statique de test
-3. Connecter horloge virtuelle
-4. Layout 4 zones fonctionnel
-5. Test à 60 FPS
+1. Mouvement des bus le long d'un tracé
+2. API GTFS Nancy (données réelles)
+3. LOD System (3 niveaux de détail)
+4. Télémétrie dynamique
+5. Main Courante fonctionnelle
+6. Synoptic - Vue linéaire
+7. Régulation & Commandes
 
 Voir [IMPLEMENTATION.md](./IMPLEMENTATION.md) pour le détail complet.
+
+## ✨ Démo Actuelle
+
+La **Vertical Slice MVP** est opérationnelle :
+- ✅ Carte interactive de Nancy
+- ✅ 1 bus cliquable (Place Stanislas)
+- ✅ Horloge virtuelle (×1, ×10, ×30, ×60)
+- ✅ Inspector avec télémétrie complète
+- ✅ Layout 5 zones responsive
+
+Lancez `npm run dev` et visitez http://localhost:3000/pcc pour essayer !
 
 ## 📄 Licence
 

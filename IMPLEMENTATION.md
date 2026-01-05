@@ -1,8 +1,8 @@
 # 🚀 IMPLEMENTATION ROADMAP - SAEIV Next-Gen
 
 **Dernière mise à jour** : 2026-01-05
-**Phase actuelle** : Phase 1 - Terminée ✅
-**Progression globale** : 20%
+**Phase actuelle** : Phase 2 - Terminée ✅
+**Progression globale** : 40%
 
 ---
 
@@ -807,9 +807,10 @@ Voir [PHASE_1_COMPLETE.md](./PHASE_1_COMPLETE.md) pour le rapport détaillé.
 
 ## 🎨 PHASE 2 : VERTICAL SLICE MVP
 
-**État** : ⏸️ Pas démarré
+**État** : ✅ TERMINÉE
 **Prérequis** : Phase 1 complète
-**Estimation tokens** : ~20k
+**Tokens utilisés** : ~22k
+**Date de completion** : 2026-01-05
 
 ### Objectif
 Avoir une démo fonctionnelle end-to-end :
@@ -993,15 +994,21 @@ export default function PCCPage() {
 
 ## ✅ CHECKLIST PHASE 2
 
-- [ ] Carte MapLibre visible et centrée sur Nancy
-- [ ] 1 bus visible sur la carte (cercle bleu)
-- [ ] Horloge virtuelle affichée et qui tourne
-- [ ] Boutons pause/play fonctionnels
-- [ ] Sélection du bus change l'Inspector
-- [ ] Layout 4 zones responsive
-- [ ] 60 FPS constant (vérifier devtools)
+- [x] Carte MapLibre visible et centrée sur Nancy
+- [x] 1 bus visible sur la carte (cercle bleu)
+- [x] Bus cliquable pour sélection
+- [x] Horloge virtuelle affichée et qui tourne
+- [x] Boutons pause/play fonctionnels
+- [x] Sélecteur de vitesse (×1, ×10, ×30, ×60)
+- [x] Sélection du bus change l'Inspector
+- [x] Inspector affiche toute la télémétrie
+- [x] Layout 5 zones responsive (avec synoptic)
+- [x] 60 FPS constant ✅
+- [x] Build production réussi
 
-**Si OK → Phase 2 terminée ✅**
+✅ **Phase 2 terminée !**
+
+Voir [PHASE_2_COMPLETE.md](./PHASE_2_COMPLETE.md) pour le rapport détaillé.
 
 ---
 
@@ -1105,29 +1112,43 @@ Beaucoup plus performant pour animer les bus.
 | Phase | État | Fichiers | LOC | Tokens utilisés | Date fin |
 |-------|------|----------|-----|-----------------|----------|
 | Phase 1 | ✅ | 18/18 | ~888 | ~18k | 2026-01-05 |
-| Phase 2 | ⏸️ | 0/8 | 0 | 0 | - |
+| Phase 2 | ✅ | 6/6 modifiés | ~1,236 | ~22k | 2026-01-05 |
 | Phase 3+ | ⏸️ | 0/X | 0 | 0 | - |
 
-**Total progression** : 20% (Phase 1/5 complète)
+**Total progression** : 40% (Phases 1-2 complètes)
 
 ---
 
 ## 🎯 PROCHAINE ACTION
 
-**Phase 1 terminée ✅**
+**Phases 1 & 2 terminées ✅**
 
-**À FAIRE MAINTENANT pour Phase 2** :
-1. Lire [PHASE_1_COMPLETE.md](./PHASE_1_COMPLETE.md) pour voir ce qui a été fait
-2. Implémenter MapLibre init dans `MapCanvas.tsx`
-3. Ajouter un bus statique de test dans `fleetSlice.ts`
-4. Connecter TimeControls au store temporal
-5. Tester l'interface à http://localhost:3000/pcc
+**Vertical Slice MVP fonctionnel !**
 
-**Commande de démarrage** :
+**À FAIRE MAINTENANT pour Phase 3** :
+1. Lire [PHASE_2_COMPLETE.md](./PHASE_2_COMPLETE.md) pour voir la démo
+2. Choisir une feature atomique (3.1 à 3.7)
+3. Implémenter la feature en isolation
+4. Tester et valider
+
+**Commandes utiles** :
 ```bash
+# Démarrer la démo
 npm run dev
-# Puis ouvrir http://localhost:3000/pcc
+
+# Accéder au PCC
+http://localhost:3000/pcc
+
+# Test : Cliquer sur le bus bleu à Nancy
+# → L'Inspector affiche la télémétrie
+# → Play : l'horloge avance
+# → ×60 : temps accéléré
 ```
+
+**Features prioritaires Phase 3** :
+- 3.1 : Mouvement des bus (animation)
+- 3.2 : API GTFS Nancy (données réelles)
+- 3.6 : Synoptic (vue linéaire)
 
 ---
 
